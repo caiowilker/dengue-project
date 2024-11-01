@@ -1,0 +1,144 @@
+/* styles.css */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Container principal */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* Estilização do título */
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+/* Estilização do formulário */
+form {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 400px;
+}
+
+form label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+form button {
+    background: #3498db;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+form button:hover {
+    background: #2980b9;
+}
+
+/* Estilização do mapa */
+#map {
+    height: 500px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* Estilização do gráfico */
+h2 {
+    text-align: center;
+    margin: 20px 0;
+}
+
+p {
+    text-align: center;
+}
+
+/* Estilização de mensagens de erro e sucesso */
+.error {
+    color: red;
+    text-align: center;
+}
+
+.success {
+    color: green;
+    text-align: center;
+}
+
+.leaflet-marker-icon.red-icon {
+    filter: hue-rotate(180deg) brightness(0.8) saturate(2); /* Ajuste para uma coloração vermelha mais intensa */
+}
+
+/* src/styles/DateFilter.css */
+.date-filter-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+    padding: 10px; /* Adiciona espaçamento interno */
+    background-color: #f8f9fa; /* Fundo claro */
+    border: 1px solid #dee2e6; /* Borda sutil */
+    border-radius: 8px; /* Bordas arredondadas */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+}
+
+.date-filter-container label {
+    margin: 0 10px;
+    font-weight: bold;
+    color: #333; /* Cor do texto */
+}
+
+.date-filter-container input {
+    padding: 10px; /* Aumenta o preenchimento para um visual mais confortável */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin: 0 10px;
+    width: 200px; /* Largura do campo de entrada */
+    transition: border-color 0.3s; /* Animação suave ao focar */
+}
+
+.date-filter-container input:focus {
+    border-color: #007bff; /* Cor da borda ao focar */
+    outline: none; /* Remove o contorno padrão do navegador */
+}
+
+.date-filter-container button {
+    padding: 10px 15px;
+    background-color: #28a745; /* Verde */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s; /* Animação suave ao passar o mouse */
+}
+
+.date-filter-container button:hover {
+    background-color: #218838; /* Verde escuro ao passar o mouse */
+}
