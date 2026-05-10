@@ -9,7 +9,7 @@
 
 ## 🔗 Acesse o sistema
 
-**[https://web-dengue-a0b99.web.app](https://web-dengue-a0b99.web.app)**
+**[https://dengue-project-eight.vercel.app/](https://dengue-project-eight.vercel.app/)**
 
 ---
 
@@ -79,7 +79,7 @@ dengue-project/
 > **Hero com painel de alertas**
 > Mapa interativo · Dashboard · Módulo educativo · Formulário de denúncia
 
-Acesse em: [https://web-dengue-a0b99.web.app](https://web-dengue-a0b99.web.app)
+Acesse em: [\[https://dengue-project-eight.vercel.app/](https://dengue-project-eight.vercel.app/)](https://dengue-project-eight.vercel.app/)
 
 ---
 
