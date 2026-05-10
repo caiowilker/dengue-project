@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dengue Alert – Plataforma Comunitária de Combate à Dengue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --card: #141c2e;
+    --border: #1e2d45;
+    --accent: #f97316;
+    --accent2: #ef4444;
+    --accent3: #facc15;
+    --teal: #14b8a6;
+    --blue: #3b82f6;
+    --text: #f0f4ff;
+    --muted: #7c8faa;
+    --success: #22c55e;
+    --radius: 16px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,14,26,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.2rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .nav-logo span.pill {
+    background: var(--accent);
+    color: #fff; font-size: 0.6rem;
+    padding: 2px 7px; border-radius: 99px;
+    font-weight: 700; letter-spacing: .05em;
+  }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a {
+    color: var(--muted); text-decoration: none;
+    font-size: 0.875rem; font-weight: 500;
+    transition: color .2s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--text); }
+  .nav-btn {
+    background: var(--accent); color: #fff;
+    border: none; padding: 8px 18px; border-radius: 99px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    transition: opacity .2s;
+  }
+  .nav-btn:hover { opacity: .85; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    padding-top: 64px;
+    display: flex; align-items: center;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 70% 40%, rgba(249,115,22,.12) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 40% at 20% 80%, rgba(20,184,166,.08) 0%, transparent 60%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0; opacity: .04;
+    background-image: linear-gradient(var(--border) 1px, transparent 1px),
+                      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .hero-inner {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 0 auto; padding: 0 2rem;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(249,115,22,.12); border: 1px solid rgba(249,115,22,.3);
+    color: var(--accent); padding: 6px 14px; border-radius: 99px;
+    font-size: .8rem; font-weight: 600; letter-spacing: .04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero-badge::before { content: '●'; font-size: .5rem; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  h1.hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 800; line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+  h1.hero-title em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent3) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero-desc { color: var(--muted); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2rem; }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    border: none; padding: 14px 28px; border-radius: 12px;
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(249,115,22,.4); }
+  .btn-ghost {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border); padding: 14px 28px; border-radius: 12px;
+    font-size: 1rem; font-weight: 500; cursor: pointer;
+    transition: border-color .2s, background .2s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-ghost:hover { border-color: var(--accent); background: rgba(249,115,22,.05); }
+  .hero-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+    margin-top: 2.5rem;
+  }
+  .stat-item { text-align: left; }
+  .stat-num {
+    font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800;
+    color: var(--accent);
+  }
+  .stat-label { font-size: .8rem; color: var(--muted); }
+  .hero-visual {
+    display: flex; justify-content: center;
+  }
+  .virus-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 24px; padding: 2rem; position: relative;
+    width: 100%; max-width: 360px;
+  }
+  .virus-icon {
+    width: 80px; height: 80px; margin: 0 auto 1.5rem;
+    background: rgba(249,115,22,.1);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem;
+  }
+  .alert-chips { display: flex; flex-direction: column; gap: 10px; }
+  .chip {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .chip-dot.red { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .chip-dot.yellow { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+  .chip-dot.green { background: var(--success); box-shadow: 0 0 8px var(--success); }
+  .chip-text { font-size: .85rem; }
+  .chip-sub { font-size: .72rem; color: var(--muted); }
+
+  /* ── SECTIONS ── */
+  section { padding: 80px 2rem; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .section-label {
+    font-size: .75rem; font-weight: 700; letter-spacing: .1em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: .75rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 700; line-height: 1.2; margin-bottom: 1rem;
+  }
+  .section-desc { color: var(--muted); max-width: 560px; font-size: 1rem; line-height: 1.7; }
+
+  /* ── CARDS GRID ── */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.75rem;
+    transition: border-color .2s, transform .2s;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-4px); }
+  .card-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin-bottom: 1.25rem;
+  }
+  .card-icon.orange { background: rgba(249,115,22,.15); }
+  .card-icon.red { background: rgba(239,68,68,.15); }
+  .card-icon.teal { background: rgba(20,184,166,.15); }
+  .card-icon.blue { background: rgba(59,130,246,.15); }
+  .card-icon.yellow { background: rgba(250,204,21,.15); }
+  .card h3 { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; margin-bottom: .5rem; }
+  .card p { color: var(--muted); font-size: .9rem; line-height: 1.6; }
+
+  /* ── ODS BADGES ── */
+  .ods-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; }
+  .ods-badge {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px;
+  }
+  .ods-num {
+    font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800;
+    min-width: 36px;
+  }
+  .ods-num.ods3 { color: #4caf50; }
+  .ods-num.ods8 { color: #a1340c; }
+  .ods-num.ods13 { color: #3f7e44; }
+  .ods-info small { display: block; font-size: .7rem; color: var(--muted); }
+  .ods-info strong { font-size: .88rem; }
+
+  /* ── MAPA ── */
+  #mapa { background: var(--bg2); }
+  .map-wrap { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  #map { height: 480px; }
+  .map-filters {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 1.5rem; align-items: flex-end;
+  }
+  .map-filters label { font-size: .8rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  .map-filters input[type=date] {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); padding: 9px 12px; border-radius: 8px;
+    font-family: inherit; font-size: .875rem;
+  }
+  .btn-sm {
+    background: var(--accent); color: #fff; border: none;
+    padding: 9px 18px; border-radius: 8px;
+    font-size: .875rem; font-weight: 600; cursor: pointer;
+    transition: opacity .2s;
+  }
+  .btn-sm:hover { opacity: .85; }
+  .btn-sm.secondary { background: var(--bg3); border: 1px solid var(--border); color: var(--text); }
+  .map-legend {
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+    margin-top: 1rem; font-size: .8rem; color: var(--muted);
+  }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ── FORM ── */
+  #denunciar { background: var(--bg2); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem; }
+  .form-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 2rem;
+  }
+  .form-card h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; margin-bottom: 1.5rem; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: .82rem; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); padding: 11px 14px; border-radius: 10px;
+    font-family: inherit; font-size: .9rem;
+    transition: border-color .2s;
+  }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .form-group textarea { resize: vertical; min-height: 100px; }
+  .form-group select option { background: var(--bg2); }
+  .form-tip { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+  .alert-msg {
+    padding: 12px 16px; border-radius: 10px; font-size: .88rem;
+    margin-top: 1rem; display: none;
+  }
+  .alert-msg.success { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: var(--success); display: block; }
+  .alert-msg.error { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: var(--accent2); display: block; }
+
+  /* ── DASHBOARD ── */
+  #dashboard { background: var(--bg); }
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 3rem; }
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.75rem;
+  }
+  .chart-card h3 { font-family: 'Syne', sans-serif; font-size: 1rem; margin-bottom: 1.5rem; color: var(--muted); }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  .kpi {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 1.25rem;
+    text-align: center;
+  }
+  .kpi-val { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+  .kpi-val.red { color: var(--accent2); }
+  .kpi-val.orange { color: var(--accent); }
+  .kpi-val.yellow { color: var(--accent3); }
+  .kpi-val.teal { color: var(--teal); }
+  .kpi-label { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+  .kpi-delta { font-size: .7rem; color: var(--accent2); margin-top: 2px; }
+
+  /* ── EDUCAÇÃO ── */
+  #educacao { background: var(--bg2); }
+  .edu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+  .edu-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.75rem;
+    position: relative; overflow: hidden;
+  }
+  .edu-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent3));
+  }
+  .edu-step {
+    font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800;
+    color: rgba(249,115,22,.15); position: absolute; top: 1rem; right: 1.5rem;
+    line-height: 1;
+  }
+  .edu-card h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; margin-bottom: .75rem; }
+  .edu-card p { color: var(--muted); font-size: .9rem; line-height: 1.6; }
+  .edu-tips { margin-top: 1rem; }
+  .edu-tips li { color: var(--muted); font-size: .85rem; list-style: none; padding: 4px 0; }
+  .edu-tips li::before { content: '✓ '; color: var(--success); font-weight: 700; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--bg); border-top: 1px solid var(--border);
+    padding: 3rem 2rem; text-align: center;
+    color: var(--muted); font-size: .85rem;
+  }
+  footer strong { color: var(--text); }
+  .footer-ods { display: flex; justify-content: center; gap: 1rem; margin: 1.5rem 0; flex-wrap: wrap; }
+  .footer-ods-item {
+    font-size: .75rem; font-weight: 700; padding: 4px 12px;
+    border-radius: 99px; letter-spacing: .03em;
+  }
+  .footer-ods-item.ods3 { background: rgba(76,175,80,.15); color: #4caf50; border: 1px solid rgba(76,175,80,.3); }
+  .footer-ods-item.ods8 { background: rgba(161,52,12,.15); color: #d97706; border: 1px solid rgba(161,52,12,.3); }
+  .footer-ods-item.ods13 { background: rgba(63,126,68,.15); color: #22c55e; border: 1px solid rgba(63,126,68,.3); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    .hero-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .hero-visual { display: none; }
+    .form-grid { grid-template-columns: 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem; opacity: 0; pointer-events: none; transition: opacity .3s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 2rem; max-width: 460px; width: 100%;
+    transform: translateY(20px); transition: transform .3s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal h2 { font-family: 'Syne', sans-serif; font-size: 1.4rem; margin-bottom: 1rem; }
+  .modal-close {
+    float: right; background: none; border: none; color: var(--muted);
+    font-size: 1.4rem; cursor: pointer; line-height: 1;
+  }
+
+  /* animations */
+  .fade-in { animation: fadeIn .6s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    🦟 Dengue<span style="color:var(--accent)">Alert</span>
+    <span class="pill">ODS 3 · 13</span>
+  </div>
+  <div class="nav-links">
+    <a href="#hero" class="active">Início</a>
+    <a href="#mapa">Mapa</a>
+    <a href="#denunciar">Denunciar</a>
+    <a href="#dashboard">Dashboard</a>
+    <a href="#educacao">Educação</a>
+  </div>
+  <button class="nav-btn" onclick="openModal()">+ Novo Relato</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="fade-in">
+      <div class="hero-badge">ALERTA EPIDEMIOLÓGICO ATIVO</div>
+      <h1 class="hero-title">
+        Combata a<br/><em>Dengue</em><br/>com a comunidade
+      </h1>
+      <p class="hero-desc">
+        Plataforma de monitoramento, conscientização e denúncia comunitária de focos de dengue. 
+        Tecnologia a serviço da saúde pública — ODS 3 e 13.
+      </p>
+      <div class="hero-cta">
+        <a href="#denunciar" class="btn-primary">📍 Reportar um foco</a>
+        <a href="#educacao" class="btn-ghost">Aprender a prevenir</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-num" id="stat1">847</div>
+          <div class="stat-label">Relatos registrados</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="stat2">134</div>
+          <div class="stat-label">Municípios cobertos</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="stat3">12k</div>
+          <div class="stat-label">Pessoas alcançadas</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual fade-in">
+      <div class="virus-card">
+        <div class="virus-icon">🦟</div>
+        <div class="alert-chips">
+          <div class="chip">
+            <div class="chip-dot red"></div>
+            <div>
+              <div class="chip-text">🚨 Alerta: Nível Alto</div>
+              <div class="chip-sub">Região Sudeste – 3 novos focos hoje</div>
+            </div>
+          </div>
+          <div class="chip">
+            <div class="chip-dot yellow"></div>
+            <div>
+              <div class="chip-text">⚠️ Atenção: Nível Médio</div>
+              <div class="chip-sub">Região Centro-Oeste – monitoramento ativo</div>
+            </div>
+          </div>
+          <div class="chip">
+            <div class="chip-dot green"></div>
+            <div>
+              <div class="chip-text">✅ Controlado</div>
+              <div class="chip-sub">Região Sul – sem novos casos</div>
+            </div>
+          </div>
+          <div class="chip" style="margin-top:.5rem; border-color:rgba(249,115,22,.3);">
+            <div>
+              <div class="chip-text" style="font-size:.78rem; color:var(--muted);">🕐 Atualizado agora</div>
+              <div class="chip-sub">Dados em tempo real da comunidade</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ODS -->
+<section id="sobre" style="padding: 60px 2rem; background: var(--bg2);">
+  <div class="container">
+    <div class="section-label">Alinhamento Acadêmico</div>
+    <div class="section-title">Objetivos de Desenvolvimento Sustentável</div>
+    <p class="section-desc">Este projeto de extensão está diretamente alinhado com os ODS da Agenda 2030 da ONU, conforme exigência da Atividade de Extensão 2026.1.</p>
+    <div class="ods-row">
+      <div class="ods-badge">
+        <div class="ods-num ods3">3</div>
+        <div class="ods-info">
+          <strong>Saúde e Bem-estar</strong>
+          <small>Combate a doenças endêmicas como a dengue</small>
+        </div>
+      </div>
+      <div class="ods-badge">
+        <div class="ods-num ods8">8</div>
+        <div class="ods-info">
+          <strong>Inovação e Empreendedorismo</strong>
+          <small>Tecnologia social para resolução de problemas</small>
+        </div>
+      </div>
+      <div class="ods-badge">
+        <div class="ods-num ods13">13</div>
+        <div class="ods-info">
+          <strong>Ação Climática</strong>
+          <small>Dengue e chuvas: relação com mudanças climáticas</small>
+        </div>
+      </div>
+    </div>
+    <div class="cards-grid" style="margin-top: 2rem;">
+      <div class="card">
+        <div class="card-icon orange">💡</div>
+        <h3>Inovação Social</h3>
+        <p>Desenvolvemos soluções tecnológicas para resolver problemas reais de saúde pública em comunidades vulneráveis.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon teal">🌍</div>
+        <h3>Impacto Ambiental</h3>
+        <p>Água parada e chuvas intensas (mudanças climáticas) favorecem a proliferação do Aedes aegypti — combatemos ambos.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon blue">👥</div>
+        <h3>Participação Comunitária</h3>
+        <p>A plataforma empodera cidadãos a serem agentes ativos na prevenção e no controle da dengue em seus bairros.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAPA -->
+<section id="mapa">
+  <div class="container">
+    <div class="section-label">Monitoramento Geográfico</div>
+    <div class="section-title">Mapa de Focos Registrados</div>
+    <p class="section-desc">Visualize os relatos de focos de dengue em tempo real. Use os filtros para análise por período.</p>
+    <div class="map-filters" style="margin-top: 1.5rem;">
+      <div>
+        <label>Data inicial</label>
+        <input type="date" id="dataInicio" value="2025-01-01"/>
+      </div>
+      <div>
+        <label>Data final</label>
+        <input type="date" id="dataFim" value="2025-12-31"/>
+      </div>
+      <button class="btn-sm" onclick="filtrarMapa()">🔍 Filtrar</button>
+      <button class="btn-sm secondary" onclick="resetMapa()">↺ Limpar</button>
+    </div>
+    <div class="map-wrap">
+      <div id="map"></div>
+    </div>
+    <div class="map-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--accent2)"></div> Alto risco</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--accent3)"></div> Médio risco</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--success)"></div> Baixo risco</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div> Sob controle</div>
+    </div>
+  </div>
+</section>
+
+<!-- DENUNCIAR -->
+<section id="denunciar">
+  <div class="container">
+    <div class="section-label">Ação Comunitária</div>
+    <div class="section-title">Registre um Foco de Dengue</div>
+    <p class="section-desc">Encontrou água parada ou possível criadouro? Reporte agora. Sua denúncia ajuda a comunidade e as autoridades de saúde.</p>
+    <div class="form-grid">
+      <div class="form-card">
+        <h3>📝 Novo Relato</h3>
+        <div class="form-group">
+          <label>Tipo de foco</label>
+          <select id="tipoFoco">
+            <option value="">Selecione o tipo</option>
+            <option value="pneus">Pneus abandonados com água</option>
+            <option value="caixadagua">Caixa d'água sem tampa</option>
+            <option value="calha">Calha entupida</option>
+            <option value="vaso">Vasos com prato acumulando água</option>
+            <option value="lixo">Lixo com acúmulo de água</option>
+            <option value="obra">Obra com água parada</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Bairro / Localidade</label>
+          <input type="text" id="bairro" placeholder="Ex: Centro, Jardim América..."/>
+        </div>
+        <div class="form-group">
+          <label>Endereço aproximado</label>
+          <input type="text" id="endereco" placeholder="Ex: Rua das Flores, próximo ao número 120"/>
+        </div>
+        <div class="form-group">
+          <label>Descrição</label>
+          <textarea id="descricao" placeholder="Descreva o que encontrou, a situação, e qualquer detalhe relevante..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Nível de risco percebido</label>
+          <select id="risco">
+            <option value="baixo">Baixo – poucos mosquitos, pequeno acúmulo</option>
+            <option value="medio" selected>Médio – acúmulo visível e constante</option>
+            <option value="alto">Alto – grande foco, muita larva visível</option>
+          </select>
+        </div>
+        <button class="btn-primary" style="width:100%" onclick="enviarRelato()">📤 Enviar Denúncia</button>
+        <div class="alert-msg" id="alertMsg"></div>
+      </div>
+      <div class="form-card">
+        <h3>📚 Por que denunciar?</h3>
+        <div style="display:flex; flex-direction:column; gap:1rem; margin-top:.5rem;">
+          <div class="chip">
+            <div style="font-size:1.5rem">🦟</div>
+            <div>
+              <div class="chip-text">Elimine o criadouro</div>
+              <div class="chip-sub">Um foco reportado = um criadouro a menos para o mosquito se reproduzir</div>
+            </div>
+          </div>
+          <div class="chip">
+            <div style="font-size:1.5rem">🏥</div>
+            <div>
+              <div class="chip-text">Ajude a saúde pública</div>
+              <div class="chip-sub">Agentes de saúde recebem as informações e agem mais rapidamente</div>
+            </div>
+          </div>
+          <div class="chip">
+            <div style="font-size:1.5rem">📊</div>
+            <div>
+              <div class="chip-text">Alimenta o mapa comunitário</div>
+              <div class="chip-sub">Seu relato aparece no mapa e alerta outros moradores da região</div>
+            </div>
+          </div>
+          <div class="chip">
+            <div style="font-size:1.5rem">🌍</div>
+            <div>
+              <div class="chip-text">Impacto climático</div>
+              <div class="chip-sub">Mudanças climáticas aumentam as chuvas e os focos — cada ação importa</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1.5rem; padding:1rem; background:rgba(249,115,22,.08); border-radius:12px; border:1px solid rgba(249,115,22,.2);">
+          <p style="font-size:.85rem; color:var(--muted);">
+            ⚠️ <strong style="color:var(--text)">Em caso de emergência médica</strong>, ligue para o <strong style="color:var(--accent)">192 (SAMU)</strong> ou procure imediatamente a UBS mais próxima.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+  <div class="container">
+    <div class="section-label">Dados e Análise</div>
+    <div class="section-title">Dashboard de Ocorrências</div>
+    <p class="section-desc">Acompanhe a evolução dos registros, tipos de focos e distribuição geográfica em tempo real.</p>
+    <div class="kpi-row" style="margin-top: 2rem;">
+      <div class="kpi">
+        <div class="kpi-val red">847</div>
+        <div class="kpi-label">Total de Relatos</div>
+        <div class="kpi-delta">▲ 23 essa semana</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val orange">312</div>
+        <div class="kpi-label">Focos Ativos</div>
+        <div class="kpi-delta">▲ 8 hoje</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val yellow" style="color:var(--accent3)">89</div>
+        <div class="kpi-label">Em Análise</div>
+        <div class="kpi-delta">↔ estável</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val teal">446</div>
+        <div class="kpi-label">Resolvidos</div>
+        <div class="kpi-delta">▲ 15 esse mês</div>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>📈 Evolução Mensal de Focos (2025)</h3>
+        <canvas id="lineChart" height="280"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>🥧 Tipos de Foco</h3>
+        <canvas id="doughnutChart" height="280"></canvas>
+      </div>
+    </div>
+    <div class="cards-grid" style="margin-top:1.5rem;">
+      <div class="chart-card" style="grid-column: 1 / -1;">
+        <h3>📊 Relatos por Região (2025)</h3>
+        <canvas id="barChart" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EDUCAÇÃO -->
+<section id="educacao">
+  <div class="container">
+    <div class="section-label">Conscientização</div>
+    <div class="section-title">Educação e Prevenção</div>
+    <p class="section-desc">Conheça as formas de prevenir a dengue em casa e na sua comunidade. Informação salva vidas.</p>
+    <div class="edu-grid">
+      <div class="edu-card">
+        <div class="edu-step">01</div>
+        <h3>🏠 Dentro de Casa</h3>
+        <p>A maioria dos focos de dengue está dentro ou ao redor das residências. Pequenos cuidados fazem grande diferença.</p>
+        <ul class="edu-tips">
+          <li>Troque a água dos vasos semanalmente</li>
+          <li>Mantenha caixas d'água sempre tampadas</li>
+          <li>Limpe calhas e lajes regularmente</li>
+          <li>Guarde pneus cobertos ou furados</li>
+          <li>Limpe pratos de vasos de plantas</li>
+        </ul>
+      </div>
+      <div class="edu-card">
+        <div class="edu-step">02</div>
+        <h3>🏘️ No Bairro e Rua</h3>
+        <p>A dengue é um problema coletivo. A mobilização comunitária é a principal arma de combate ao mosquito.</p>
+        <ul class="edu-tips">
+          <li>Descarte lixo em locais adequados</li>
+          <li>Alerte vizinhos sobre focos visíveis</li>
+          <li>Participe de mutirões de limpeza</li>
+          <li>Use esta plataforma para denunciar</li>
+          <li>Apoie agentes de saúde em visitas</li>
+        </ul>
+      </div>
+      <div class="edu-card">
+        <div class="edu-step">03</div>
+        <h3>🌧️ Chuvas e Clima</h3>
+        <p>As mudanças climáticas intensificam as chuvas, criando mais criadouros e ampliando o risco de dengue. (ODS 13)</p>
+        <ul class="edu-tips">
+          <li>Após chuvas, remova água acumulada</li>
+          <li>Verifique quintais e garagens</li>
+          <li>Atenção a entulhos encharcados</li>
+          <li>Esvazie piscinas não utilizadas</li>
+          <li>Monitore terrenos baldios próximos</li>
+        </ul>
+      </div>
+      <div class="edu-card">
+        <div class="edu-step">04</div>
+        <h3>🤒 Sintomas da Dengue</h3>
+        <p>Reconhecer os sintomas cedo é fundamental para buscar atendimento médico e evitar complicações graves.</p>
+        <ul class="edu-tips">
+          <li>Febre alta repentina (acima de 38°C)</li>
+          <li>Dor de cabeça e dores no corpo</li>
+          <li>Manchas vermelhas na pele</li>
+          <li>Dor atrás dos olhos</li>
+          <li>Náusea e cansaço intenso</li>
+        </ul>
+      </div>
+      <div class="edu-card">
+        <div class="edu-step">05</div>
+        <h3>💊 O que NÃO fazer</h3>
+        <p>Erros comuns que podem agravar a dengue e colocar vidas em risco. Compartilhe essas informações.</p>
+        <ul class="edu-tips">
+          <li>NÃO tome Aspirina ou anti-inflamatórios</li>
+          <li>NÃO ignore febre acima de 38°C</li>
+          <li>NÃO se automedique sem consulta</li>
+          <li>NÃO abandone o tratamento médico</li>
+          <li>NÃO deixe de se hidratar bastante</li>
+        </ul>
+      </div>
+      <div class="edu-card">
+        <div class="edu-step">06</div>
+        <h3>📞 Onde Buscar Ajuda</h3>
+        <p>Saiba os canais oficiais de atendimento e notificação de dengue em sua cidade.</p>
+        <ul class="edu-tips">
+          <li>UBS – Unidade Básica de Saúde local</li>
+          <li>Disque Saúde: 136 (gratuito)</li>
+          <li>SAMU: 192 (emergências)</li>
+          <li>Vigilância Epidemiológica Municipal</li>
+          <li>Aplicativo ConecteSUS</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; margin-bottom:.5rem;">
+      🦟 DengueAlert
+    </div>
+    <p>Plataforma de extensão universitária — <strong>Atividade de Extensão 2026.1</strong></p>
+    <p style="margin-top:.25rem; font-size:.8rem;">Engenharia / Exatas · Tema: Agir Local e Pensar Global</p>
+    <div class="footer-ods">
+      <span class="footer-ods-item ods3">ODS 3 · Saúde e Bem-estar</span>
+      <span class="footer-ods-item ods8">ODS 8 · Inovação e Empreendedorismo</span>
+      <span class="footer-ods-item ods13">ODS 13 · Ação Climática</span>
+    </div>
+    <p style="font-size:.75rem; margin-top:.5rem;">© 2026 · Desenvolvido como projeto de extensão universitária · Dados fictícios para fins acadêmicos</p>
+  </div>
+</footer>
+
+<!-- MODAL RÁPIDO -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>📍 Relato Rápido</h2>
+    <p style="color:var(--muted); font-size:.9rem; margin-bottom:1.5rem;">Registre um foco em segundos com sua localização atual.</p>
+    <div class="form-group">
+      <label>Tipo de foco</label>
+      <select id="mTipo">
+        <option value="">Selecione...</option>
+        <option>Pneus com água</option>
+        <option>Caixa d'água</option>
+        <option>Calha entupida</option>
+        <option>Vaso com prato</option>
+        <option>Lixo acumulando água</option>
+        <option>Outro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Endereço / referência</label>
+      <input type="text" id="mEndereco" placeholder="Rua, bairro, referência..."/>
+    </div>
+    <div class="form-group">
+      <label>Descrição breve</label>
+      <textarea id="mDesc" style="min-height:70px" placeholder="Descreva rapidamente..."></textarea>
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="enviarRelatoModal()">📤 Enviar agora</button>
+    <div class="alert-msg" id="modalAlertMsg"></div>
+  </div>
+</div>
+
+<script type="module">
+// ═══════════════════════════════════════════════
+// FIREBASE — configuração real do projeto
+// ═══════════════════════════════════════════════
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import {
+  getFirestore, collection, addDoc, getDocs,
+  query, where, orderBy, Timestamp, onSnapshot
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBObTIvz6fHEIHnASjZYRYkkYRcXNyxB40",
+  authDomain: "web-dengue-a0b99.firebaseapp.com",
+  projectId: "web-dengue-a0b99",
+  storageBucket: "web-dengue-a0b99.appspot.com",
+  messagingSenderId: "578856616836",
+  appId: "1:578856616836:web:405d679a8a11124187d3d1",
+  measurementId: "G-3GPLSR6G6J"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ═══════════════════════════════════════════════
+// FIRESTORE — funções de acesso (espelho do firebaseService.js original)
+// ═══════════════════════════════════════════════
+async function addRelato(relato) {
+  return await addDoc(collection(db, 'relatos'), {
+    tipo:       relato.tipo,
+    descricao:  relato.descricao,
+    bairro:     relato.bairro,
+    endereco:   relato.endereco || '',
+    risco:      relato.risco,
+    localizacao: relato.localizacao,   // { latitude, longitude }
+    data: Timestamp.fromDate(new Date())
+  });
+}
+
+async function getRelatos() {
+  const snap = await getDocs(collection(db, 'relatos'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function buscarRelatosPorIntervaloDeDatas(dataInicio, dataFim) {
+  const inicio = Timestamp.fromDate(new Date(dataInicio));
+  const fim    = Timestamp.fromDate(new Date(dataFim + 'T23:59:59'));
+  const q = query(
+    collection(db, 'relatos'),
+    where('data', '>=', inicio),
+    where('data', '<=', fim),
+    orderBy('data', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// ═══════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════
+let map, markersLayer;
+let lineChartInst, doughnutChartInst, barChartInst;
+const colors = { alto: '#ef4444', medio: '#facc15', baixo: '#22c55e' };
+
+// dados de fallback visíveis enquanto o Firestore carrega / estiver vazio
+const SEED = [
+  { lat:-23.5505, lng:-46.6333, tipo:'pneus',       descricao:'Pneus abandonados',        bairro:'São Paulo - SP',      risco:'alto'  },
+  { lat:-22.9068, lng:-43.1729, tipo:'caixadagua',   descricao:"Caixa d'água sem tampa",   bairro:'Rio de Janeiro - RJ', risco:'alto'  },
+  { lat:-19.9167, lng:-43.9345, tipo:'calha',        descricao:'Calha entupida',           bairro:'Belo Horizonte - MG', risco:'medio' },
+  { lat:-15.7801, lng:-47.9292, tipo:'lixo',         descricao:'Lixo com água acumulada',  bairro:'Brasília - DF',       risco:'medio' },
+  { lat:-12.9714, lng:-38.5014, tipo:'obra',         descricao:'Obra com água parada',     bairro:'Salvador - BA',       risco:'alto'  },
+  { lat:-8.0476,  lng:-34.877,  tipo:'vaso',         descricao:'Vasos com pratos',         bairro:'Recife - PE',         risco:'medio' },
+  { lat:-3.7172,  lng:-38.5433, tipo:'outro',        descricao:'Terreno baldio alagado',   bairro:'Fortaleza - CE',      risco:'alto'  },
+  { lat:-25.4284, lng:-49.2733, tipo:'calha',        descricao:'Calha obstruída',          bairro:'Curitiba - PR',       risco:'baixo' },
+  { lat:-30.0346, lng:-51.2177, tipo:'caixadagua',   descricao:'Caixa de medição',         bairro:'Porto Alegre - RS',   risco:'baixo' },
+  { lat:-1.4558,  lng:-48.4902, tipo:'outro',        descricao:'Piscina abandonada',       bairro:'Belém - PA',          risco:'alto'  },
+  { lat:-20.3155, lng:-40.3128, tipo:'obra',         descricao:'Entulho de obra',          bairro:'Vitória - ES',        risco:'medio' },
+  { lat:-3.1190,  lng:-60.0217, tipo:'caixadagua',   descricao:'Cisterna aberta',          bairro:'Manaus - AM',         risco:'alto'  },
+];
+
+// ═══════════════════════════════════════════════
+// MAPA
+// ═══════════════════════════════════════════════
+function initMap() {
+  map = L.map('map').setView([-14.235, -51.9253], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18, attribution: '© OpenStreetMap'
+  }).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+
+  // carrega do Firestore em tempo real com onSnapshot
+  onSnapshot(collection(db, 'relatos'), snap => {
+    const relatos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const dados = relatos.length > 0
+      ? relatos.filter(r => r.localizacao?.latitude)
+          .map(r => ({
+            lat:      r.localizacao.latitude,
+            lng:      r.localizacao.longitude,
+            tipo:     r.tipo     || 'outro',
+            descricao:r.descricao|| '',
+            bairro:   r.bairro   || 'Não informado',
+            risco:    r.risco    || 'medio',
+            data:     r.data
+          }))
+      : SEED;
+    carregarMarcadores(dados.length > 0 ? dados : SEED);
+    atualizarKPIs(relatos.length > 0 ? relatos : SEED);
+    atualizarGraficos(relatos.length > 0 ? relatos : SEED);
+  });
+}
+
+function carregarMarcadores(dados) {
+  markersLayer.clearLayers();
+  dados.forEach(d => {
+    if (!d.lat || !d.lng) return;
+    const icon = L.divIcon({
+      html: `<div style="width:14px;height:14px;background:${colors[d.risco]||'#facc15'};border-radius:50%;border:2px solid white;box-shadow:0 0 8px ${colors[d.risco]||'#facc15'}"></div>`,
+      className: '', iconSize: [14,14], iconAnchor: [7,7]
+    });
+    const dataStr = d.data?.toDate ? d.data.toDate().toLocaleDateString('pt-BR') : 'Sem data';
+    L.marker([d.lat, d.lng], { icon })
+      .addTo(markersLayer)
+      .bindPopup(`
+        <strong>${d.bairro}</strong><br/>
+        <b>Tipo:</b> ${d.tipo || '—'}<br/>
+        ${d.descricao}<br/>
+        <small>${dataStr}</small><br/>
+        <span style="color:${colors[d.risco]||'#facc15'};font-weight:bold;">
+          ● ${(d.risco||'medio').charAt(0).toUpperCase()+(d.risco||'medio').slice(1)} risco
+        </span>`);
+  });
+}
+
+window.filtrarMapa = async function() {
+  const di = document.getElementById('dataInicio').value;
+  const df = document.getElementById('dataFim').value;
+  if (!di || !df) { alert('Selecione um intervalo de datas.'); return; }
+  const btn = document.querySelector('.btn-sm');
+  btn.textContent = '⏳ Buscando...';
+  try {
+    const relatos = await buscarRelatosPorIntervaloDeDatas(di, df);
+    const dados = relatos
+      .filter(r => r.localizacao?.latitude)
+      .map(r => ({
+        lat: r.localizacao.latitude, lng: r.localizacao.longitude,
+        tipo: r.tipo, descricao: r.descricao, bairro: r.bairro,
+        risco: r.risco, data: r.data
+      }));
+    carregarMarcadores(dados.length > 0 ? dados : SEED);
+    btn.textContent = `🔍 Filtrar (${relatos.length} encontrados)`;
+  } catch(e) {
+    console.error(e);
+    btn.textContent = '🔍 Filtrar';
+  }
+};
+
+window.resetMapa = async function() {
+  document.getElementById('dataInicio').value = '2025-01-01';
+  document.getElementById('dataFim').value = '2025-12-31';
+  const relatos = await getRelatos();
+  const dados = relatos.filter(r => r.localizacao?.latitude)
+    .map(r => ({ lat: r.localizacao.latitude, lng: r.localizacao.longitude,
+      tipo: r.tipo, descricao: r.descricao, bairro: r.bairro, risco: r.risco, data: r.data }));
+  carregarMarcadores(dados.length > 0 ? dados : SEED);
+};
+
+// ═══════════════════════════════════════════════
+// KPIs DINÂMICOS
+// ═══════════════════════════════════════════════
+function atualizarKPIs(relatos) {
+  const total  = relatos.length;
+  const ativos = relatos.filter(r => r.risco === 'alto').length;
+  const analise= relatos.filter(r => r.risco === 'medio').length;
+  const resolvidos = relatos.filter(r => r.risco === 'baixo').length;
+
+  const el = id => document.getElementById(id);
+  if (el('stat1')) el('stat1').textContent = total || 847;
+
+  const kpis = document.querySelectorAll('.kpi-val');
+  if (kpis[0]) kpis[0].textContent = total      || 847;
+  if (kpis[1]) kpis[1].textContent = ativos     || 312;
+  if (kpis[2]) kpis[2].textContent = analise    || 89;
+  if (kpis[3]) kpis[3].textContent = resolvidos || 446;
+}
+
+// ═══════════════════════════════════════════════
+// GRÁFICOS — atualiza com dados reais do Firestore
+// ═══════════════════════════════════════════════
+function atualizarGraficos(relatos) {
+  // ── Linha mensal ──
+  const meses = Array(12).fill(0);
+  relatos.forEach(r => {
+    if (r.data?.toDate) {
+      const m = r.data.toDate().getMonth();
+      meses[m]++;
+    }
+  });
+  const dadosLinha = meses.some(v => v > 0)
+    ? meses
+    : [45,62,98,134,119,87,73,65,82,91,108,78];
+
+  if (lineChartInst) {
+    lineChartInst.data.datasets[0].data = dadosLinha;
+    lineChartInst.update();
+  }
+
+  // ── Rosca por tipo ──
+  const tiposMap = { pneus:0, caixadagua:0, calha:0, vaso:0, lixo:0, obra:0, outro:0 };
+  relatos.forEach(r => { if (tiposMap[r.tipo] !== undefined) tiposMap[r.tipo]++; else tiposMap.outro++; });
+  const tiposVals = Object.values(tiposMap);
+  const usarTiposReais = tiposVals.some(v => v > 0);
+
+  if (doughnutChartInst) {
+    doughnutChartInst.data.datasets[0].data = usarTiposReais ? tiposVals : [22,18,15,14,12,10,9];
+    doughnutChartInst.update();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// ENVIAR RELATO — salva no Firestore com geolocalização
+// ═══════════════════════════════════════════════
+async function salvarRelato({ tipo, bairro, endereco, descricao, risco, localizacao }) {
+  await addRelato({ tipo, bairro, endereco, descricao, risco, localizacao });
+}
+
+function obterLocalizacao() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) { reject(new Error('Geolocalização não suportada')); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      ()  => resolve(null)   // não bloqueia se o usuário negar
+    );
+  });
+}
+
+window.enviarRelato = async function() {
+  const tipo     = document.getElementById('tipoFoco').value;
+  const bairro   = document.getElementById('bairro').value.trim();
+  const endereco = document.getElementById('endereco').value.trim();
+  const descricao= document.getElementById('descricao').value.trim();
+  const risco    = document.getElementById('risco').value;
+  const msg      = document.getElementById('alertMsg');
+
+  if (!tipo || !bairro || !descricao) {
+    msg.className = 'alert-msg error';
+    msg.textContent = '⚠️ Preencha ao menos o tipo de foco, bairro e descrição.';
+    return;
+  }
+
+  const btn = document.querySelector('#denunciar .btn-primary');
+  btn.textContent = '⏳ Enviando...';
+  btn.disabled = true;
+
+  try {
+    const localizacao = await obterLocalizacao();
+    await salvarRelato({ tipo, bairro, endereco, descricao, risco, localizacao });
+
+    msg.className = 'alert-msg success';
+    msg.textContent = '✅ Relato salvo no banco de dados! Obrigado pela contribuição.';
+
+    document.getElementById('tipoFoco').value  = '';
+    document.getElementById('bairro').value    = '';
+    document.getElementById('endereco').value  = '';
+    document.getElementById('descricao').value = '';
+    document.getElementById('risco').value     = 'medio';
+  } catch(e) {
+    console.error(e);
+    msg.className = 'alert-msg error';
+    msg.textContent = '❌ Erro ao salvar. Verifique a conexão e tente novamente.';
+  } finally {
+    btn.textContent = '📤 Enviar Denúncia';
+    btn.disabled = false;
+  }
+};
+
+// ═══════════════════════════════════════════════
+// MODAL RÁPIDO — também salva no Firestore
+// ═══════════════════════════════════════════════
+window.openModal = function() {
+  document.getElementById('modalOverlay').classList.add('open');
+};
+window.closeModal = function() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modalAlertMsg').className = 'alert-msg';
+};
+window.closeModalOutside = function(e) {
+  if (e.target.id === 'modalOverlay') window.closeModal();
+};
+window.enviarRelatoModal = async function() {
+  const tipo = document.getElementById('mTipo').value;
+  const end  = document.getElementById('mEndereco').value.trim();
+  const desc = document.getElementById('mDesc').value.trim();
+  const msg  = document.getElementById('modalAlertMsg');
+
+  if (!tipo || !end) {
+    msg.className = 'alert-msg error';
+    msg.textContent = '⚠️ Preencha o tipo de foco e endereço.';
+    return;
+  }
+
+  const btn = document.querySelector('.modal .btn-primary');
+  btn.textContent = '⏳ Enviando...';
+  btn.disabled = true;
+
+  try {
+    const localizacao = await obterLocalizacao();
+    await addRelato({ tipo, bairro: end, endereco: end, descricao: desc || 'Relato rápido', risco: 'medio', localizacao });
+    msg.className = 'alert-msg success';
+    msg.textContent = '✅ Relato salvo no Firebase!';
+    setTimeout(window.closeModal, 1800);
+  } catch(e) {
+    msg.className = 'alert-msg error';
+    msg.textContent = '❌ Erro ao salvar. Tente novamente.';
+  } finally {
+    btn.textContent = '📤 Enviar agora';
+    btn.disabled = false;
+  }
+};
+
+// ═══════════════════════════════════════════════
+// GRÁFICOS — inicialização (estrutura base)
+// ═══════════════════════════════════════════════
+function initCharts() {
+  const ctx1 = document.getElementById('lineChart').getContext('2d');
+  lineChartInst = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+      datasets: [{
+        label: 'Focos Registrados',
+        data: [45,62,98,134,119,87,73,65,82,91,108,78],
+        borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,.1)',
+        tension: .4, fill: true, pointBackgroundColor: '#f97316', pointRadius: 4
+      },{
+        label: 'Resolvidos',
+        data: [30,48,71,95,88,66,55,50,60,70,82,61],
+        borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,.05)',
+        tension: .4, fill: false, pointBackgroundColor: '#22c55e', pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#7c8faa', font: { family: 'DM Sans' } } } },
+      scales: {
+        x: { ticks: { color: '#7c8faa' }, grid: { color: '#1e2d45' } },
+        y: { ticks: { color: '#7c8faa' }, grid: { color: '#1e2d45' } }
+      }
+    }
+  });
+
+  const ctx2 = document.getElementById('doughnutChart').getContext('2d');
+  doughnutChartInst = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: ["Pneus","Caixa d'água","Calha","Vasos","Lixo","Obra","Outro"],
+      datasets: [{ data: [22,18,15,14,12,10,9],
+        backgroundColor: ['#ef4444','#f97316','#facc15','#22c55e','#3b82f6','#14b8a6','#8b5cf6'],
+        borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, cutout: '65%',
+      plugins: { legend: { position: 'bottom', labels: { color: '#7c8faa', padding: 12, font: { family: 'DM Sans', size: 11 } } } }
+    }
+  });
+
+  const ctx3 = document.getElementById('barChart').getContext('2d');
+  barChartInst = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: ['Sudeste','Nordeste','Norte','Centro-Oeste','Sul'],
+      datasets: [
+        { label: 'Alto risco',  data: [312,198,143,87,45], backgroundColor: '#ef4444', borderRadius: 6 },
+        { label: 'Médio risco', data: [156,134,98,67,31],  backgroundColor: '#facc15', borderRadius: 6 },
+        { label: 'Baixo risco', data: [89,67,54,43,22],    backgroundColor: '#22c55e', borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#7c8faa', font: { family: 'DM Sans' } } } },
+      scales: {
+        x: { stacked: true, ticks: { color: '#7c8faa' }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: '#7c8faa' }, grid: { color: '#1e2d45' } }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('load', () => {
+  initMap();
+  initCharts();
+});
+
+// nav active on scroll
+window.addEventListener('scroll', () => {
+  const sections = ['hero','sobre','mapa','denunciar','dashboard','educacao'];
+  const links = document.querySelectorAll('.nav-links a');
+  let current = 'hero';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 100) current = id;
+  });
+  links.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
